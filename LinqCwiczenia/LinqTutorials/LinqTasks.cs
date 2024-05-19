@@ -294,8 +294,13 @@ namespace LinqTutorials
             {
                 new { Ename = "Brak wartości", Job = (string)null, Hiredate = (DateTime?)null }
             };
-            I
             IEnumerable<object> result = Emps.Select(e => new
+            {
+                Ename = e.Ename,
+                Job = e.Job,
+                HireDate = e.HireDate
+            }).Union(list);
+            IEnumerable<object> result2 = Emps.Select(e => new
             {
                 Ename = e.Ename,
                 Job = e.Job,
@@ -321,7 +326,14 @@ namespace LinqTutorials
         /// </summary>
         public static IEnumerable<object> Task11()
         {
-            IEnumerable<object> result = from dept in Depts.;
+            IEnumerable<object> result = Depts.GroupJoin(Emps, dept => dept.Deptno, emp => emp.Deptno, (dept, empd) => new
+            {
+                dept, empd
+            }).Where(d=>d.empd.Count() > 1).Select(d => new
+            {
+                name = d.dept.Dname,
+                numOfEmployees = d.empd.Count()
+            });
             return result;
         }
 
@@ -335,6 +347,7 @@ namespace LinqTutorials
         public static IEnumerable<Emp> Task12()
         {
             IEnumerable<Emp> result = null;
+            result = Emps.GetEmpsWithSubordinates();
             return result;
         }
 
@@ -348,7 +361,7 @@ namespace LinqTutorials
         public static int Task13(int[] arr)
         {
             int result = 0;
-            //result=
+            result = arr.GroupBy(x => x).Where(y => y.Count() % 2 != 0).Select(z => z.Key).Single();
             return result;
         }
 
@@ -359,7 +372,11 @@ namespace LinqTutorials
         public static IEnumerable<Dept> Task14()
         {
             IEnumerable<Dept> result = null;
-            //result =
+            result = from dept in Depts
+                join emp in Emps on dept.Deptno equals emp.Deptno into empdept
+                where empdept.Count() == 5 || empdept.Count() == 0
+                orderby dept.Dname
+                select dept;
             return result;
         }
         
@@ -373,7 +390,9 @@ namespace LinqTutorials
         public static IEnumerable<Object> Task15()
         {
             IEnumerable<Object> result = null;
-            //result =
+            result = Emps.Where(e => e.Job.Contains('A')).GroupBy(e => e.Job).Where(g => g.Count() > 2)
+                .OrderByDescending(g => g.Count()).Select(g => new { Praca = g.Key, LiczbaPracowników = g.Count() })
+                .ToList();
             return result;
         }
         
@@ -382,16 +401,14 @@ namespace LinqTutorials
         /// </summary>
         public static IEnumerable<Object> Task16()
         {
-            IEnumerable<Emp> result2 = from e in Emps && from d in Depts where e.Job == "Backened programmer" select e, d;
             IEnumerable<Object> result = null;
-            //result =
+            result =from e in Emps join d in Depts on e.Deptno equals d.Deptno select new { e, d };
             return result;
         }
     }
 
     public static class CustomExtensionMethods
     {
-        //Put your extension methods here
         public static IEnumerable<Emp> GetEmpsWithSubordinates(this IEnumerable<Emp> emps)
         {
             var result = emps.Where(e => emps.Any(e2 => e2.Mgr == e.Mgr)).OrderBy(e => e.Ename).ThenByDescending(e => e.Salary);
